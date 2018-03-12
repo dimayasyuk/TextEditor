@@ -1,7 +1,10 @@
 package sample;
 
-public class Controller {
-    public void onClose(){
-        System.exit(0);
-    }
+
+import javafx.event.Event;
+import javafx.event.EventHandler;
+import javafx.scene.input.KeyEvent;
+
+public class Controller  {
+
 }
