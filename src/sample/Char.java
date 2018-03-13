@@ -7,8 +7,9 @@ import javafx.scene.text.Font;
  */
 public class Char {
     private char symbol;
-    private double coordinateX;
-    private double coordinateY;
+    private int coordinateX;
+    private int coordinateY;
+    private int height;
     private Font font;
 
     Char(char symbol){
@@ -17,23 +18,31 @@ public class Char {
     Char(Char ch){
         symbol = ch.getSymbol();
     }
-    public double getCoordinateX() {
+    public int getCoordinateX() {
         return coordinateX;
+    }
+
+    public String getCharToString(){
+       return Character.toString(symbol);
     }
 
     public Font getFont() {
         return font;
     }
 
-    public double getCoordinateY() {
+    public void setHeight(int height) {
+        this.height = height;
+    }
+
+    public int getCoordinateY(int coordinateY) {
         return coordinateY;
     }
 
-    public void setCoordinateX(double coordinateX) {
+    public void setCoordinateX(int coordinateX) {
         this.coordinateX = coordinateX;
     }
 
-    public void setCoordinateY(double coordinateY) {
+    public void setCoordinateY(int coordinateY) {
         this.coordinateY = coordinateY;
     }
 

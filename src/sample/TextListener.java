@@ -11,31 +11,35 @@ import javafx.scene.input.KeyEvent;
  */
 public class TextListener implements EventHandler<KeyEvent> {
 
-    Main main;
-
-    TextListener(Main main){
+    private Main main;
+    public TextListener(Main main){
         this.main = main;
     }
 
     @Override
     public void handle(KeyEvent event) {
-        if(event.getEventType() == KeyEvent.KEY_TYPED){
+        if(event.getEventType() == KeyEvent.KEY_PRESSED){
+           // main.inputText(event.getText().charAt(0));
+
+        }
+        /*if(event.getEventType() == KeyEvent.KEY_TYPED){
             if(event.getCharacter().equals(" ")){
                 main.getMyLine().add(new Char(' '));
             }
-        }
-    if(event.getEventType() == KeyEvent.KEY_PRESSED){
+        }*/
+    /*if(event.getEventType() == KeyEvent.KEY_PRESSED){
         if(event.getCode() == KeyCode.BACK_SPACE) {
             main.getMyLine().delete();
+            main.paintCanvas();
         }
         else if(event.isShiftDown()){
             main.getMyLine().add(new Char(event.getText().toUpperCase().charAt(0)));
+        main.paintCanvas();
         }
         else {
             main.getMyLine().add(new Char(event.getText().charAt(0)));
+        main.paintCanvas();
         }
-        main.getGraphicsContext().clearRect(0,0,main.getCanvas().getWidth(),main.getCanvas().getHeight());
-        main.getGraphicsContext().strokeText(main.getMyLine().toString(),10,10);
-    }
+    }*/
        }
     }

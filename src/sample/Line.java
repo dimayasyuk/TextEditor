@@ -8,13 +8,17 @@ import java.util.List;
  */
 public class Line {
    List<Char> chars;
-    public Line(){
+    private double coordinateY;
+    private int indexOfLine;
 
+    public Line(){
         chars = new ArrayList<>();
     }
     public void add(Char ch){
-
         chars.add(new Char(ch));
+    }
+    public void add(int index,char key){
+        chars.add(index,new Char(key));
     }
     public String toString(){
         String string = new String();
@@ -24,9 +28,16 @@ public class Line {
         }
         return string;
     }
+    public List<Char> getChars(){
+        return chars;
+    }
     public void delete() {
         if (chars.size() > 0) {
             chars.remove(chars.size() - 1);
         }
+    }
+
+    public void setIndexOfLine(int indexOfLine) {
+        this.indexOfLine = indexOfLine;
     }
 }

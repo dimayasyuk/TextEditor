@@ -1,5 +1,7 @@
 package sample;
 
+import com.sun.javafx.tk.FontMetrics;
+import com.sun.javafx.tk.Toolkit;
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -20,8 +22,14 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import javafx.scene.text.Font;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Main extends Application {
 
@@ -31,18 +39,22 @@ public class Main extends Application {
        private ToolBar toolBar;
        private Scene myScene;
        private Canvas canvas;
+       private Carriage carriage;
        private GraphicsContext graphicsContext;
-       private Line myLine = new Line();
+       private int startCoordinate  = 10;
+       private List<Line> myLines = new ArrayList<>();
 
     public Scene getScene() {
         return myScene;
     }
 
-    public Line getMyLine(){ return myLine; }
+    public List<Line> getMyLines(){ return myLines; }
 
     public GraphicsContext getGraphicsContext(){ return graphicsContext; }
 
     public Canvas getCanvas(){ return canvas; }
+
+    public int getStartX(){return startCoordinate;}
 
     private MenuBar createMenuBar(){
             MenuBar menuBar = new MenuBar();
@@ -147,6 +159,55 @@ public class Main extends Application {
 
             return toolBar;
         }
+
+        public void carriageTimer(){
+            Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    paintCarriage();
+                }
+            },500,1000);
+        }
+
+        public void paintCarriage(){
+            FontMetrics fontMetrics = Toolkit.getToolkit().getFontLoader().getFontMetrics(graphicsContext.getFont());
+            graphicsContext.strokeLine(carriage.getCoordinateX(),carriage.getCoordinateY(),carriage.getCoordinateX(),fontMetrics.getLineHeight());
+            try{
+                Thread.sleep(500);
+            }catch (InterruptedException e){
+                e.printStackTrace();
+            }
+            graphicsContext.clearRect(carriage.getCoordinateX(),carriage.getCoordinateY(),graphicsContext.getLineWidth(),fontMetrics.getLineHeight());
+        }
+
+        public void createInput(){
+            carriage = new Carriage();
+            carriageTimer();
+            myLines.add(new Line());
+        }
+
+       /* public void inputText(char key){
+        myLines.get(carriage.getCarriageX()).add(carriage.getCarriageX(),key);
+        paintCanvas();
+        }
+        public void paintCanvas(){
+            int y = startCoordinate;
+            for(Line lines:myLines) {
+                for (Char ch : lines.getChars()) {
+                    int x = startCoordinate;
+                    FontMetrics fontMetrics = Toolkit.getToolkit().getFontLoader().getFontMetrics(graphicsContext.getFont());
+                    graphicsContext.strokeText(ch.getCharToString(), carriage.getCoordinateX(), carriage.getCoordinateTwoY());
+                    ch.setCoordinateX(x);
+                    ch.setCoordinateY(y);
+                    x += fontMetrics.computeStringWidth(ch.getCharToString()) + 3;
+                    //ch.setHeight(fontMetrics.getXheight());
+                    //graphicsContext.clearRect(0,0,canvas.getWidth(),canvas.getHeight());
+
+                }
+            }
+        }*/
+
     @Override
     public void start(Stage primaryStage) throws Exception{
         primaryStage.setTitle("Текстовый редактор");
@@ -162,9 +223,8 @@ public class Main extends Application {
 
         canvas.widthProperty().bind(myPane.widthProperty());
         canvas.heightProperty().bind(myPane.heightProperty());
-        graphicsContext.setFont(new Font("Arial",10));
+        graphicsContext.setFont(new Font("Arial",14));
         rootNode.setCenter(myPane);
-
 
         myScene.setOnKeyPressed(new TextListener(this));
         myScene.setOnKeyTyped(new TextListener(this));
@@ -177,6 +237,7 @@ public class Main extends Application {
 
         primaryStage.show();
 
+        createInput();
     }
     public static void main(String[] args) {
         launch(args);

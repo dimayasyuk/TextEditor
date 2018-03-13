@@ -7,8 +7,8 @@ import javafx.scene.input.MouseEvent;
  * Created by Lenovo on 05.03.2018.
  */
 public class MouseListener implements EventHandler<MouseEvent> {
-    Main main;
-    MouseListener(Main main){
+    private Main main;
+    public MouseListener(Main main){
         this.main = main;
     }
     @Override
