@@ -8,7 +8,9 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -20,6 +22,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.InputEvent;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.paint.Color;
@@ -41,7 +44,7 @@ public class Main extends Application {
        private Canvas canvas;
        private Carriage carriage;
        private GraphicsContext graphicsContext;
-       private int startCoordinate  = 10;
+       private int startCoordinate  = 0;
        private List<Line> myLines = new ArrayList<>();
 
     public Scene getScene() {
@@ -54,7 +57,9 @@ public class Main extends Application {
 
     public Canvas getCanvas(){ return canvas; }
 
-    public int getStartX(){return startCoordinate;}
+    public Carriage getCarriage() {
+        return carriage;
+    }
 
     private MenuBar createMenuBar(){
             MenuBar menuBar = new MenuBar();
@@ -172,42 +177,124 @@ public class Main extends Application {
 
         public void paintCarriage(){
             FontMetrics fontMetrics = Toolkit.getToolkit().getFontLoader().getFontMetrics(graphicsContext.getFont());
-            graphicsContext.strokeLine(carriage.getCoordinateX(),carriage.getCoordinateY(),carriage.getCoordinateX(),fontMetrics.getLineHeight());
+            int y2 = carriage.getCoordinateY() - (int)(0.7*fontMetrics.getLineHeight());
+            graphicsContext.strokeLine(carriage.getCoordinateX(),carriage.getCoordinateY(),carriage.getCoordinateX(),y2) ;
             try{
                 Thread.sleep(500);
             }catch (InterruptedException e){
                 e.printStackTrace();
             }
-            graphicsContext.clearRect(carriage.getCoordinateX(),carriage.getCoordinateY(),graphicsContext.getLineWidth(),fontMetrics.getLineHeight());
+            graphicsContext.clearRect(carriage.getCoordinateX(),carriage.getCoordinateY(),graphicsContext.getLineWidth(),carriage.getCoordinateY()- y2);
         }
-
+         public void canvasTimer(){
+            Timer timer = new Timer();
+             timer.schedule(new TimerTask() {
+                 @Override
+                 public void run() {
+                     paintCanvas();
+                 }
+             },100,100);
+         }
         public void createInput(){
             carriage = new Carriage();
             carriageTimer();
-            myLines.add(new Line());
+            Line line = new Line();
+            //canvasTimer();
+            myLines.add(line);
         }
 
-       /* public void inputText(char key){
-        myLines.get(carriage.getCarriageX()).add(carriage.getCarriageX(),key);
-        paintCanvas();
+        public void inputText(char key){
+            myLines.get(carriage.getCarriageOfColumn()).add(carriage.getCarriageOfLine(),key,graphicsContext.getFont());
+            graphicsContext.clearRect(0,0,canvas.getWidth(),canvas.getHeight());
+            carriageToRight();
+            paintCanvas();
         }
         public void paintCanvas(){
+            for(Line line: myLines){
+                 line.setMaxHightOfLine(0);
+                 for (Char ch:line.getChars()){
+                     Font font = ch.getFont();
+                     FontMetrics fontMetrics = Toolkit.getToolkit().getFontLoader().getFontMetrics(font);
+                     line.setMaxHightOfLine(fontMetrics.getLineHeight());
+                 }
+                 if (line.getMaxHightOfLine() == 0) line.setMaxHightOfLine(15);
+            }
             int y = startCoordinate;
-            for(Line lines:myLines) {
-                for (Char ch : lines.getChars()) {
-                    int x = startCoordinate;
-                    FontMetrics fontMetrics = Toolkit.getToolkit().getFontLoader().getFontMetrics(graphicsContext.getFont());
-                    graphicsContext.strokeText(ch.getCharToString(), carriage.getCoordinateX(), carriage.getCoordinateTwoY());
+            int lineY = -1;
+            for(Line line:myLines) {
+                y+=line.getMaxHightOfLine();
+                int x = startCoordinate;
+                lineY++;
+                int letterX = 0;
+                for (Char ch : line.getChars()) {
+                    letterX++;
+                    Font font = ch.getFont();
+                    graphicsContext.setFont(font);
+                    FontMetrics fontMetrics = Toolkit.getToolkit().getFontLoader().getFontMetrics(font);
+                    graphicsContext.strokeText(ch.getCharToString(), x, y);
+                    ch.setHeight(fontMetrics.getLineHeight());
+                    ch.setWeight(fontMetrics.computeStringWidth(ch.toString()));
                     ch.setCoordinateX(x);
                     ch.setCoordinateY(y);
-                    x += fontMetrics.computeStringWidth(ch.getCharToString()) + 3;
-                    //ch.setHeight(fontMetrics.getXheight());
-                    //graphicsContext.clearRect(0,0,canvas.getWidth(),canvas.getHeight());
-
+                    x += fontMetrics.computeStringWidth(ch.getCharToString())+ 1;
+                    if(carriage.getCarriageOfLine()== letterX && carriage.getCarriageOfColumn() == lineY) {
+                        carriage.setCoordinateX(x);
+                        carriage.setCoordinateY(y);
+                    }
+                }
+                line.setCoordinateY(y);
+                if(carriage.getCarriageOfLine()== 0 && carriage.getCarriageOfColumn() == lineY) {
+                    carriage.setCoordinateX(startCoordinate);
+                    carriage.setCoordinateY(y);
                 }
             }
-        }*/
+        }
+        public void newLine(){
+          Line newLine = myLines.get(carriage.getCarriageOfColumn()).copyOfSubLine(carriage.getCarriageOfLine(),myLines.get(carriage.getCarriageOfColumn()).size());
+          myLines.get(carriage.getCarriageOfColumn()).removeCopyOfSubLine(carriage.getCarriageOfLine());
+          myLines.add(carriage.getCarriageOfColumn() + 1,newLine);
+          carriage.setCarriageOfLine(0);
+          carriageToDown();
+        }
 
+        public void carriageToDown(){
+            boolean isMoveToDown = myLines.size() - 1 > carriage.getCarriageOfColumn();
+            boolean isNextLineLess = myLines.get(carriage.getCarriageOfColumn()).size() < carriage.getCarriageOfLine();
+            if(isMoveToDown){
+                carriage.setCarriageOfColumn(carriage.getCarriageOfColumn() +1 );
+            }
+            if(isNextLineLess){
+                carriage.setCarriageOfColumn(carriage.getCarriageOfColumn() + 1 );
+                carriage.setCarriageOfLine(myLines.get(carriage.getCarriageOfColumn()).size());
+            }
+        }
+            public void carriageToUp(){
+
+            }
+        public void carriageToRight(){
+            boolean isNotEndOfLine = (carriage.getCarriageOfLine() + 1) <= myLines.get(carriage.getCarriageOfColumn()).size();
+            boolean isEndText = ((carriage.getCarriageOfColumn() + 1)  == myLines.size() && myLines.get(carriage.getCarriageOfColumn()).size() == carriage.getCarriageOfLine());
+            if (isEndText)
+                return;
+            else if(isNotEndOfLine)
+                carriage.setCarriageOfLine(carriage.getCarriageOfLine() + 1 );
+            else if (carriage.getCarriageOfColumn() < myLines.size() -1){
+                carriage.setCarriageOfColumn(carriage.getCarriageOfColumn() +1 );
+                carriage.setCoordinateX(0);
+            }
+        }
+        public void carriageToLeft(){
+            boolean isStartOfText = (carriage.getCarriageOfLine() == 0 && carriage.getCarriageOfColumn() == 0);
+            boolean isCanMoveToLeft = (carriage.getCarriageOfLine() > 0);
+            if(isStartOfText)
+                return;
+            else if (isCanMoveToLeft){
+                carriage.setCarriageOfLine(carriage.getCarriageOfLine()  - 1);
+            }else {
+                carriageToUp();
+                carriage.setCarriageOfLine(myLines.get(carriage.getCarriageOfColumn()).size());
+            }
+        }
     @Override
     public void start(Stage primaryStage) throws Exception{
         primaryStage.setTitle("Текстовый редактор");
@@ -219,15 +306,26 @@ public class Main extends Application {
 
         canvas = new Canvas();
         graphicsContext = canvas.getGraphicsContext2D();
-        ScrollPane myPane = new ScrollPane(canvas);
-
+        ScrollPane myPane = new ScrollPane();
+        rootNode.setCenter(myPane);
+        myPane.setContent(canvas);
         canvas.widthProperty().bind(myPane.widthProperty());
         canvas.heightProperty().bind(myPane.heightProperty());
-        graphicsContext.setFont(new Font("Arial",14));
-        rootNode.setCenter(myPane);
+        myPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        myPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+        graphicsContext.setFont(new Font("Times New Roman",14));
 
         myScene.setOnKeyPressed(new TextListener(this));
+
         myScene.setOnKeyTyped(new TextListener(this));
+        /*myScene.addEventHandler(EventType.ROOT, new EventHandler<Event>() {
+            @Override
+            public void handle(Event event) {
+                paintCanvas();
+            }
+        });*/
+
 
         toolBar = createToolBar();
         menuBar = createMenuBar();

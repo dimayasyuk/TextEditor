@@ -11,13 +11,13 @@ public class Carriage {
 
 
     public Carriage(){
-        carriageOfLine = 0;
-        coordinateX = 5;
-        coordinateY = 5;
         carriageOfColumn = 0;
+        carriageOfLine = 0;
+        coordinateX = 0;
+        coordinateY = 15;
     }
 
-    public int getcarriageOfLine() {
+    public int getCarriageOfLine() {
         return carriageOfLine;
     }
 

@@ -9,17 +9,31 @@ public class Char {
     private char symbol;
     private int coordinateX;
     private int coordinateY;
-    private int height;
+    private float height;
+    private float weight;
     private Font font;
 
     Char(char symbol){
         this.symbol = symbol;
+    }
+
+    Char(char symbol,Font font){
+        this.symbol = symbol;
+        this.font = font;
     }
     Char(Char ch){
         symbol = ch.getSymbol();
     }
     public int getCoordinateX() {
         return coordinateX;
+    }
+
+    public float getWeight() {
+        return weight;
+    }
+
+    public void setWeight(float weight) {
+        this.weight = weight;
     }
 
     public String getCharToString(){
@@ -30,11 +44,15 @@ public class Char {
         return font;
     }
 
-    public void setHeight(int height) {
+    public void setHeight(float height) {
         this.height = height;
     }
 
-    public int getCoordinateY(int coordinateY) {
+    public float getHeight() {
+        return height;
+    }
+
+    public int getCoordinateY() {
         return coordinateY;
     }
 
