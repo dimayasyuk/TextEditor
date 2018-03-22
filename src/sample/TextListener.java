@@ -21,14 +21,37 @@ public class TextListener implements EventHandler<KeyEvent> {
     @Override
     public void handle(KeyEvent event) {
         if(event.getEventType() == KeyEvent.KEY_PRESSED) {
-            if (event.getCode() == KeyCode.LEFT)
+            if(event.getCode() == KeyCode.CAPS)
+                return;
+            else if(event.isControlDown() && event.getCode() == KeyCode.C){
+                main.copy();
+            }
+            else if(event.isControlDown() && event.getCode() == KeyCode.X){
+                main.cut();
+            }
+            else if(event.isControlDown() && event.getCode() == KeyCode.V){
+                main.paste();
+            }
+            else if(event.getCode() == KeyCode.DELETE)
+                main.delete();
+            else if(event.getCode() == KeyCode.BACK_SPACE)
+                main.backSpace();
+            else if (event.getCode() == KeyCode.LEFT) {
                 main.carriageToLeft();
-            else if(event.getCode() == KeyCode.RIGHT)
+                main.falseAllSelection();
+            }
+            else if(event.getCode() == KeyCode.RIGHT) {
                 main.carriageToRight();
-            else if(event.getCode() == KeyCode.UP)
+                main.falseAllSelection();
+            }
+            else if(event.getCode() == KeyCode.UP){
                 main.carriageToUp();
-            else if(event.getCode() == KeyCode.DOWN)
+                main.falseAllSelection();
+            }
+            else if(event.getCode() == KeyCode.DOWN){
                 main.carriageToDown();
+                main.falseAllSelection();
+            }
             else if (event.getCode() == KeyCode.ENTER) {
               main.newLine();
             } else {

@@ -6,23 +6,25 @@ import javafx.scene.text.Font;
  * Created by Lenovo on 12.03.2018.
  */
 public class Char {
+    private int numberLine;
     private char symbol;
     private int coordinateX;
     private int coordinateY;
     private float height;
     private float weight;
     private Font font;
+    private boolean isSelect;
 
-    Char(char symbol){
-        this.symbol = symbol;
-    }
 
     Char(char symbol,Font font){
         this.symbol = symbol;
         this.font = font;
+        isSelect = false;
     }
     Char(Char ch){
         symbol = ch.getSymbol();
+        font = ch.getFont();
+        isSelect = ch.isSelect();
     }
     public int getCoordinateX() {
         return coordinateX;
@@ -66,5 +68,21 @@ public class Char {
 
     public char getSymbol(){
         return symbol;
+    }
+
+    public boolean isSelect() {
+        return isSelect;
+    }
+
+    public void setSelect(boolean select) {
+        isSelect = select;
+    }
+
+    public int getNumberLine() {
+        return numberLine;
+    }
+
+    public void setNumberLine(int numberLine) {
+        this.numberLine = numberLine;
     }
 }
