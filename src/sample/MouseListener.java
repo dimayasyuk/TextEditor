@@ -10,7 +10,7 @@ import javafx.scene.input.MouseEvent;
  */
 public class MouseListener implements EventHandler<MouseEvent> {
     private Main main;
-    private Point2D click;
+    private Point2D clickOnMouse;
     public MouseListener(Main main){
         this.main = main;
     }
@@ -19,10 +19,10 @@ public class MouseListener implements EventHandler<MouseEvent> {
     public void handle(MouseEvent event) {
         if(event.getEventType() == MouseEvent.MOUSE_RELEASED){
             Point2D point2D = new Point2D(event.getX(),event.getY());
-            main.clickedMouse(click,point2D);
+            main.clickedMouse(clickOnMouse,point2D);
         }
         if (event.getEventType() == MouseEvent.MOUSE_PRESSED){
-            click = new Point2D(event.getX(),event.getY());
+            clickOnMouse = new Point2D(event.getX(),event.getY());
         }
         if(event.getEventType() == MouseEvent.MOUSE_CLICKED){
           Point2D point2D = new Point2D(event.getX(),event.getY());
@@ -30,8 +30,8 @@ public class MouseListener implements EventHandler<MouseEvent> {
        }
         if (event.getEventType() == MouseEvent.MOUSE_DRAGGED){
             Point2D point2D = new Point2D(event.getX(),event.getY());
-            main.clickedMouse(click,point2D);
+            main.clickedMouse(clickOnMouse,point2D);
         }
-
+        main.paintCanvas();
     }
 }

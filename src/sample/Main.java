@@ -23,13 +23,13 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
-import javafx.scene.input.KeyCombination;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.input.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.FontPosture;
+import javafx.scene.text.FontWeight;
+import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.scene.text.Font;
@@ -40,6 +40,7 @@ import java.util.*;
 public class Main extends Application {
 
        private MenuBar menuBar;
+       private ContextMenu editMenu;
        private  ComboBox<String> fontesSize;
        private ComboBox<String> fontes;
        private ToolBar toolBar;
@@ -52,8 +53,13 @@ public class Main extends Application {
        private List<Line> myLines = new ArrayList<>();
        private Stage myStage;
        private File file;
+       private ToggleButton BoldFont;
+       private ToggleButton ItalicFont;
        private MouseListener mouseListener = new MouseListener(this);
-       private AnimationTimer animationTimer = new AnimationTimer() {
+       private FontWeight fontWeight;
+       private FontPosture fontPosture;
+
+       private AnimationTimer animationTimer = new AnimationTimer() {//FIXME animationTimer
            @Override
            public void handle(long now) {
                paintCanvas();
@@ -61,27 +67,78 @@ public class Main extends Application {
            }
        };
 
-    public Scene getScene() {
-        return myScene;
-    }
-
-    public List<Line> getMyLines(){ return myLines; }
-
-    public GraphicsContext getGraphicsContext(){ graphicsContext.clearRect(0,0,canvas.getWidth(),canvas.getHeight());return graphicsContext; }
-
-    public Canvas getCanvas(){ return canvas; }
     public void setLines(ArrayList<Line> lines){
         myLines = lines;
     }
 
-    public void setFontSize(double fontSize){
-      font = new Font(font.getName(),fontSize);
+    public FontPosture getFontPosture() {
+        return fontPosture;
     }
-    public void setFont(String myFont){
-        font  = new Font(myFont,font.getSize());
+
+    public void setFontPosture(FontPosture fontPosture) {
+        this.fontPosture = fontPosture;
     }
+
+    public FontWeight getFontWeight() {
+        return fontWeight;
+    }
+
+    public void setFontWeight(FontWeight fontWeight) {
+        this.fontWeight = fontWeight;
+    }
+
+    public int getFontSize(){
+        return (int)font.getSize();
+    }
+    public GraphicsContext getGraphicsContext(){
+        return graphicsContext;
+    }
+
+    public Canvas getCanvas() {
+        return canvas;
+    }
+
     public Carriage getCarriage() {
         return carriage;
+    }
+
+    public ToggleButton getBoldFont(){
+        return BoldFont;
+    }
+
+    public ToggleButton getItalicFont() {
+        return ItalicFont;
+    }
+
+    private ContextMenu createContextMenu(){
+
+        MenuItem cut = new MenuItem("Cut");
+        MenuItem copy = new MenuItem("Copy");
+        MenuItem paste = new MenuItem("Paste");
+
+        ContextMenu contextMenu = new ContextMenu(cut,copy,paste);
+        cut.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                cut();
+                paintCanvas();
+            }
+        });
+        copy.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                copy();
+                paintCanvas();
+            }
+        });
+        paste.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                paste();
+                paintCanvas();
+            }
+        });
+        return contextMenu;
     }
 
     private MenuBar createMenuBar(){
@@ -113,57 +170,81 @@ public class Main extends Application {
                 public void handle(ActionEvent event) {
                     FileChooser fileChooser = new FileChooser();
                     fileChooser.setTitle("Open Resource File");
+                    fileChooser.getExtensionFilters().addAll(
+                            new FileChooser.ExtensionFilter("Text Files", "*.txt"));
                     file = fileChooser.showOpenDialog(myStage);
-                    setLines(new ArrayList<Line>());
-                    try{
-                        BufferedReader reader = new BufferedReader(new FileReader(file));
-                        String line;
-                        while((line =reader.readLine() )!= null){
-                            Line newLine = new Line();
-                            char [] charLine = line.toCharArray();
-                            for(char ch:charLine){
-                                newLine.add(ch,graphicsContext.getFont());
+                    if(file != null) {
+                        setLines(new ArrayList<Line>());
+                        try {
+                            BufferedReader reader = new BufferedReader(new FileReader(file));
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                Line newLine = new Line();
+                                char[] charLine = line.toCharArray();
+                                for (char ch : charLine) {
+                                    newLine.add(ch, graphicsContext.getFont(),Main.this);
+                                }
+                                myLines.add(newLine);
                             }
-                            myLines.add(newLine);
+                            reader.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
                         }
-                        reader.close();
-                    }
-                    catch (IOException e){
-                        e.printStackTrace();
                     }
                 }
             });
 
-//            MenuItem close = new MenuItem("Закрыть",new ImageView("close.png"));
-//            close.setAccelerator(KeyCombination.keyCombination("shortcut+C"));
-//            close.setOnAction(new EventHandler<ActionEvent>() {
-//                @Override
-//                public void handle(ActionEvent event) {
-//
-//                }
-//            });
+        MenuItem saveHow = new MenuItem("Сохранить как",new ImageView("save.png"));
+        saveHow.setAccelerator(KeyCombination.keyCombination("shortcut+H"));
+        saveHow.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                    FileChooser fileChooser = new FileChooser();
+                    fileChooser.setTitle("Open Resource File");
+                    file = fileChooser.showSaveDialog(myStage);
+                    if(file!=null) {
+                    try (FileWriter writer = new FileWriter(file)) {
+                        for (Line line : myLines) {
+                            String string = "";
+                            for (Char ch : line.getChars()) {
+                                string += ch.getCharToString();
+                            }
+                            writer.write(string + '\n');
+                        }
+                        //writer.flush();
+                    } catch (IOException io) {
+                        io.printStackTrace();
+                    }
+                }
+            }
+        });
 
             MenuItem save = new MenuItem("Сохранить",new ImageView("save.png"));
             save.setAccelerator(KeyCombination.keyCombination("shortcut+S"));
-            save.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent event) {
-                    if(file!= null) {
-                        try (FileWriter writer = new FileWriter(file)) {
-                            for (Line line : myLines) {
-                                String string = "";
-                                for (Char ch : line.getChars()) {
-                                    string += ch.getCharToString();
-                                }
-                                writer.write(string + '\n');
+        save.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                if(file == null){
+                    FileChooser fileChooser = new FileChooser();
+                    fileChooser.setTitle("Open Resource File");
+                    file = fileChooser.showSaveDialog(myStage);
+                }
+                if(file!=null) {
+                    try (FileWriter writer = new FileWriter(file)) {
+                        for (Line line : myLines) {
+                            String string = "";
+                            for (Char ch : line.getChars()) {
+                                string += ch.getCharToString();
                             }
-                            //writer.flush();
-                        } catch (IOException io) {
-                            io.printStackTrace();
+                            writer.write(string + '\n');
                         }
+                        //writer.flush();
+                    } catch (IOException io) {
+                        io.printStackTrace();
                     }
                 }
-            });
+            }
+        });
 
             MenuItem exit = new MenuItem("Выйти");
             exit.setOnAction(new EventHandler<ActionEvent>() {
@@ -172,13 +253,9 @@ public class Main extends Application {
                     System.exit(0);
                 }
             });
-            exit.setAccelerator(KeyCombination.keyCombination("shortcut+E"));
-            fileMenu.getItems().addAll(newFile,open,save,new SeparatorMenuItem(),exit);
+            exit.setAccelerator(KeyCombination.keyCombination("shortcut+Q"));
+            fileMenu.getItems().addAll(newFile,open,save,saveHow,new SeparatorMenuItem(),exit);
 
-//            Menu changeMenu = new Menu("Правка");
-//
-//
-//            Menu formatMenu = new Menu("Формат");
 
             Menu helpMenu = new Menu("Помощь");
             MenuItem help = new MenuItem("О программе",new ImageView("info.png"));
@@ -194,7 +271,7 @@ public class Main extends Application {
             });
             helpMenu.getItems().addAll(help);
 //            menuBar.getMenus().addAll(fileMenu,changeMenu,formatMenu,helpMenu);
-//
+
         menuBar.getMenus().addAll(fileMenu,helpMenu);
             return menuBar;
         }
@@ -202,18 +279,82 @@ public class Main extends Application {
         private ToolBar createToolBar(){
             ToolBar toolBar = new ToolBar();
 
-            Button BoldFont = new Button("Полужирный",new ImageView("bold.png"));
+            BoldFont = new ToggleButton("Полужирный",new ImageView("bold.png"));
             BoldFont.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-            BoldFont.setTooltip(new Tooltip("Полужирный)"));
+            BoldFont.setTooltip(new Tooltip("Полужирный"));
 
-            Button ItalicFont = new Button("Курсив",new ImageView("kyrsiv.jpg"));
+            ItalicFont = new ToggleButton("Курсив",new ImageView("kyrsiv.jpg"));
             ItalicFont.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-            BoldFont.setTooltip(new Tooltip("Курсив"));
+            ItalicFont.setTooltip(new Tooltip("Курсив"));
+            ItalicFont.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent event) {
+                    if(ItalicFont.isSelected()){
+                        if(BoldFont.isSelected()){
+                            font = Font.font(font.getName(),FontWeight.BOLD,FontPosture.ITALIC,getFontSize());
+                            fontPosture = FontPosture.ITALIC;
+                            fontWeight = FontWeight.BOLD;
+                        }
+                        else{
+                            font = Font.font(font.getName(),FontWeight.NORMAL,FontPosture.ITALIC,getFontSize());
+                            fontPosture = FontPosture.ITALIC;
+                            fontWeight = FontWeight.NORMAL;
+                        }
+                    }else{
+                        if(BoldFont.isSelected()){
+                            font = Font.font(font.getName(),FontWeight.BOLD,FontPosture.REGULAR,getFontSize());
+                            fontPosture = FontPosture.REGULAR;
+                            fontWeight = FontWeight.BOLD;
+                        }
+                        else{
+                            font = Font.font(font.getName(),FontWeight.NORMAL,FontPosture.REGULAR,getFontSize());
+                            fontPosture = FontPosture.REGULAR;
+                            fontWeight = FontWeight.NORMAL;
+                        }
+                    }
+                    changeFontStyle(fontWeight,fontPosture);
+                }
+            });
 
-            Button UnderlineFont = new Button("Подчеркнутый",new ImageView("line.gif"));
+            BoldFont.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent event) {
+                    if(BoldFont.isSelected()){
+                        if(ItalicFont.isSelected()){
+                            font = Font.font(font.getName(),FontWeight.BOLD,FontPosture.ITALIC,getFontSize());
+                            fontPosture = FontPosture.ITALIC;
+                            fontWeight = FontWeight.BOLD;
+                        }
+                        else{
+                            font = Font.font(font.getName(),FontWeight.BOLD,FontPosture.REGULAR,getFontSize());
+                            fontPosture = FontPosture.REGULAR;
+                            fontWeight = FontWeight.BOLD;
+                        }
+                    }else{
+                        if(ItalicFont.isSelected()){
+                            font = Font.font(font.getName(),FontWeight.NORMAL,FontPosture.ITALIC,getFontSize());
+                            fontPosture = FontPosture.ITALIC;
+                            fontWeight = FontWeight.NORMAL;
+                        }
+                        else{
+                            font = Font.font(font.getName(),FontWeight.NORMAL,FontPosture.REGULAR,getFontSize());
+                            fontPosture = FontPosture.REGULAR;
+                            fontWeight = FontWeight.NORMAL;
+                        }
+                    }
+                    changeFontStyle(fontWeight,fontPosture);
+                }
+            });
+            /*ToggleButton UnderlineFont = new ToggleButton("Подчеркнутый",new ImageView("line.gif"));
             UnderlineFont.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-            BoldFont.setTooltip(new Tooltip("Подчеркнутый"));
+            UnderlineFont.setTooltip(new Tooltip("Подчеркнутый"));
+            UnderlineFont.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent event) {
 
+                }
+            });
+            */
             ObservableList<String> Size = FXCollections.observableArrayList("10","15","20");
             fontesSize = new ComboBox<>(Size);
             fontesSize.setValue("10");
@@ -221,12 +362,60 @@ public class Main extends Application {
                 @Override
                 public void handle(ActionEvent event) {
                     String size = fontesSize.getValue();
-                    System.out.println(size);
-                    if(size.equals("10"))
-                        setFontSize(10);
-                    else if(size.equals("15"))
-                        setFontSize(15);
-                    else setFontSize(20);
+                    if(size.equals("10")) {
+                        if(BoldFont.isSelected()){
+                            if(ItalicFont.isSelected()){
+                                font = Font.font(font.getName(),FontWeight.BOLD,FontPosture.ITALIC,10);
+                            }
+                            else{
+                                font = Font.font(font.getName(),FontWeight.BOLD,FontPosture.REGULAR,10);
+                            }
+                        }else{
+                            if(ItalicFont.isSelected()){
+                                font = Font.font(font.getName(),FontWeight.NORMAL,FontPosture.ITALIC,10);
+                            }
+                            else{
+                                font = Font.font(font.getName(),FontWeight.NORMAL,FontPosture.REGULAR,10);
+                            }
+                        }
+                        changeFontSize(10);
+                    }
+                    else if(size.equals("15")) {
+                        if(BoldFont.isSelected()){
+                            if(ItalicFont.isSelected()){
+                                font = Font.font(font.getName(),FontWeight.BOLD,FontPosture.ITALIC,15);
+                            }
+                            else{
+                                font = Font.font(font.getName(),FontWeight.BOLD,FontPosture.REGULAR,15);
+                            }
+                        }else{
+                            if(ItalicFont.isSelected()){
+                                font = Font.font(font.getName(),FontWeight.NORMAL,FontPosture.ITALIC,15);
+                            }
+                            else{
+                                font = Font.font(font.getName(),FontWeight.NORMAL,FontPosture.REGULAR,15);
+                            }
+                        }
+                        changeFontSize(15);
+                    }
+                    else{
+                        if(BoldFont.isSelected()){
+                            if(ItalicFont.isSelected()){
+                                font = Font.font(font.getName(),FontWeight.BOLD,FontPosture.ITALIC,20);
+                            }
+                            else{
+                                font = Font.font(font.getName(),FontWeight.BOLD,FontPosture.REGULAR,20);
+                            }
+                        }else{
+                            if(ItalicFont.isSelected()){
+                                font = Font.font(font.getName(),FontWeight.NORMAL,FontPosture.ITALIC,20);
+                            }
+                            else{
+                                font = Font.font(font.getName(),FontWeight.NORMAL,FontPosture.REGULAR,20);
+                            }
+                        }
+                        changeFontSize(20);
+                    }
                 }
             });
 
@@ -238,18 +427,99 @@ public class Main extends Application {
                 public void handle(ActionEvent event) {
                     String myFont = fontes.getValue();
                     if(myFont.equals("Arial")){
-                        setFont("Arial");
+                        if(BoldFont.isSelected()){
+                            if(ItalicFont.isSelected()){
+                                font = Font.font("Arial",FontWeight.BOLD,FontPosture.ITALIC,font.getSize());
+                            }
+                            else{
+                                font = Font.font("Arial",FontWeight.BOLD,FontPosture.REGULAR,font.getSize());
+                            }
+                        }else{
+                            if(ItalicFont.isSelected()){
+                                font = Font.font("Arial",FontWeight.NORMAL,FontPosture.ITALIC,font.getSize());
+                            }
+                            else{
+                                font = Font.font("Arial",FontWeight.NORMAL,FontPosture.REGULAR,font.getSize());
+                            }
+                        }
                     } else if(myFont.equals("Times New Roman")){
-                        setFont("Times New Roman");
+                        if(ItalicFont.isSelected()){
+                            font = Font.font("Times New Roman",FontWeight.BOLD,FontPosture.ITALIC,font.getSize());
+                        }
+                        else{
+                            font = Font.font("Times New Roman",FontWeight.BOLD,FontPosture.REGULAR,font.getSize());
+                        }
+                    }else{
+                        if(ItalicFont.isSelected()){
+                            font = Font.font("Times New Roman",FontWeight.NORMAL,FontPosture.ITALIC,font.getSize());
+                        }
+                        else{
+                            font = Font.font("Times New Roman",FontWeight.NORMAL,FontPosture.REGULAR,font.getSize());
+                        }
                     }
+                    changeFontFamily(font);
                 }
             });
 
-            toolBar.getItems().addAll(BoldFont,ItalicFont,UnderlineFont,fontesSize,fontes);
+            Button cutButton = new Button("Вырезать",new ImageView("cut.png"));
+            cutButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+            cutButton.setTooltip(new Tooltip("Вырезать"));
+            cutButton.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent event) {
+                    cut();
+                }
+            });
+            Button copyButton = new Button("Копировать",new ImageView("copy.png"));
+            copyButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+            copyButton.setTooltip(new Tooltip("Копировать"));
+            copyButton.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent event) {
+                    copy();
+                }
+            });
+            Button pasteButton = new Button("Вставить",new ImageView("paste.png"));
+            pasteButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+            pasteButton.setTooltip(new Tooltip("Вставить"));
+            pasteButton.setOnAction(new EventHandler<ActionEvent>() {
+                @Override
+                public void handle(ActionEvent event) {
+                    paste();
+                }
+            });
+            toolBar.getItems().addAll(BoldFont,ItalicFont,cutButton,copyButton,pasteButton,fontesSize,fontes);
 
             return toolBar;
         }
 
+        public void changeFontSize(int size){
+         for (Line line:myLines){
+             for (Char ch:line.getChars()){
+                 if(ch.isSelect()){
+                     ch.setFontSize(size);
+                 }
+             }
+            }
+        }
+    public void changeFontStyle(FontWeight fontWeight,FontPosture fontPosture){
+        for (Line line:myLines){
+            for (Char ch:line.getChars()){
+                if(ch.isSelect()){
+                    ch.setFontStyle(fontWeight,fontPosture);
+                }
+            }
+        }
+    }
+        public void changeFontFamily(Font font){
+        for (Line line:myLines){
+            for (Char ch:line.getChars()){
+                if(ch.isSelect()){
+                    ch.setFontFamily(font);
+                }
+            }
+        }
+    }
         public void carriageTimer(){
             Timer timer = new Timer();
             timer.schedule(new TimerTask() {
@@ -259,32 +529,22 @@ public class Main extends Application {
                 }
             },500,1000);
         }
-    public void canvasTimer(){
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                graphicsContext.clearRect(0,0,canvas.getWidth(),canvas.getHeight());
-            }
-        },0,200);
-    }
+
         public void paintCarriage(){
-            FontMetrics fontMetrics = Toolkit.getToolkit().getFontLoader().getFontMetrics(graphicsContext.getFont());
-            int y2 = carriage.getCoordinateY() + 1 - (int)(0.9*fontMetrics.getLineHeight());
-            graphicsContext.strokeLine(carriage.getCoordinateX(),carriage.getCoordinateY() + 1,carriage.getCoordinateX(),y2) ;
+            FontMetrics fontMetrics = Toolkit.getToolkit().getFontLoader().getFontMetrics(font);
+            int y2 = carriage.getCoordinateY() - (int)(0.8*fontMetrics.getLineHeight());
+            graphicsContext.strokeLine(carriage.getCoordinateX(),carriage.getCoordinateY(),carriage.getCoordinateX(),y2) ;
             try{
                 Thread.sleep(500);
             }catch (InterruptedException e){
                 e.printStackTrace();
             }
-            graphicsContext.clearRect(carriage.getCoordinateX(),y2,graphicsContext.getLineWidth(),carriage.getCoordinateY() +1 - y2);
+            graphicsContext.clearRect(carriage.getCoordinateX(),y2,graphicsContext.getLineWidth(),carriage.getCoordinateY() + 1 - y2);
         }
         public void createInput(){
             carriage = new Carriage();
             carriageTimer();
             Line line = new Line();
-            canvasTimer();
-            animationTimer.start();
             myLines.add(line);
 
         }
@@ -306,24 +566,72 @@ public class Main extends Application {
             return setCaret;
         }
         public void copy(){
-            final ClipboardContent clipboardContent = new ClipboardContent();
+            boolean setCaret = true;
             String string = "";
-            for(Line line:myLines){
-                string = "";
-                for(Char ch:line.getChars()){
-                    if(ch.isSelect()){
-                        string+=ch.getCharToString();
+            final ClipboardContent clipboardContent = new ClipboardContent();
+            for (int y = myLines.size() - 1; y >= 0; y--) {
+                if (!setCaret && carriage.getCarriageOfLine() == 0) {
+                    string+="\n";
+                }
+                for (int x = myLines.get(y).getChars().size() - 1; x >= 0; x--) {
+                    if (myLines.get(y).getChars().get(x).isSelect()) {
+                        if (setCaret) {
+                            carriage.setCarriageOfLine(x +1 );
+                            carriage.setCarriageOfColumn(y);
+                            setCaret = false;
+                        }
+                        string+=myLines.get(y).getChars().get(x).getCharToString();
+                        carriageToLeft();
                     }
                 }
             }
-            clipboardContent.putString(string);
+            StringBuilder stringBuilder = new StringBuilder(string);
+            stringBuilder.reverse();
+            clipboardContent.putString(new String(stringBuilder));
             Clipboard.getSystemClipboard().setContent(clipboardContent);
         }
         public void paste(){
-
+            final ClipboardContent clipboardContent = new ClipboardContent();
+            clipboardContent.putString(Clipboard.getSystemClipboard().getString());
+            Clipboard.getSystemClipboard().setContent(clipboardContent);
+            if(clipboardContent.hasString()){
+                String string = clipboardContent.getString();
+                deleteSelectedText();
+                for(int index = 0;index < string.length();index++) {
+                    if (string.charAt(index) == '\n')
+                        newLine();
+                    else {
+                        myLines.get(carriage.getCarriageOfColumn()).add(new Char(string.charAt(index), font,this));
+                    carriageToRight();
+                    }
+                }
+            }
         }
         public void cut(){
-
+            boolean setCaret = true;
+            String string = "";
+            final ClipboardContent clipboardContent = new ClipboardContent();
+            for (int y = myLines.size() - 1; y >= 0; y--) {
+                if (!setCaret && carriage.getCarriageOfLine() == 0) {
+                    deleteChar();
+                    string+="\n";
+                }
+                for (int x = myLines.get(y).getChars().size() - 1; x >= 0; x--) {
+                    if (myLines.get(y).getChars().get(x).isSelect()) {
+                        if (setCaret) {
+                            carriage.setCarriageOfLine(x +1 );
+                            carriage.setCarriageOfColumn(y);
+                            setCaret = false;
+                        }
+                        string+=myLines.get(y).getChars().get(x).getCharToString();
+                        deleteChar();
+                    }
+                }
+            }
+            StringBuilder stringBuilder = new StringBuilder(string);
+            stringBuilder.reverse();
+            clipboardContent.putString(new String(stringBuilder));
+            Clipboard.getSystemClipboard().setContent(clipboardContent);
         }
 
         public void falseAllSelection(){
@@ -335,11 +643,11 @@ public class Main extends Application {
         }
         public void inputText(char key){
             deleteSelectedText();
-            myLines.get(carriage.getCarriageOfColumn()).add(carriage.getCarriageOfLine(),key,font);
-            //graphicsContext.clearRect(0,0,canvas.getWidth(),canvas.getHeight());
+            myLines.get(carriage.getCarriageOfColumn()).add(carriage.getCarriageOfLine(),key,font,this);
             carriageToRight();
         }
         public void paintCanvas(){
+           graphicsContext.clearRect(0,0,canvas.getWidth(),canvas.getHeight());
             for(Line line: myLines){
                  line.setMaxHeightOfLine(0);
                  for (Char ch:line.getChars()){
@@ -363,7 +671,7 @@ public class Main extends Application {
                     FontMetrics fontMetrics = Toolkit.getToolkit().getFontLoader().getFontMetrics(font);
                     if(ch.isSelect()){
                         graphicsContext.setFill(Color.AQUA);
-                        graphicsContext.fillRect(x-2,y-line.getMaxHeightOfLine(),
+                        graphicsContext.fillRect(x-1,y-0.8*line.getMaxHeightOfLine(),
                                 fontMetrics.computeStringWidth(ch.getCharToString()) + 3,line.getMaxHeightOfLine());
                         graphicsContext.setFill(Color.WHITE);
 
@@ -401,26 +709,25 @@ public class Main extends Application {
         }
 
         public void backSpace(){
-            deleteSelectedText();
+            if(deleteSelectedText());
             deleteChar();
         }
         public void delete(){
-            deleteSelectedText();
+            if(deleteSelectedText());
             deleteNextChar();
         }
         public void deleteNextChar(){
             boolean ifEndOfText = ((carriage.getCarriageOfColumn() == myLines.size() - 1) && carriage.getCarriageOfLine() == myLines.get(carriage.getCarriageOfColumn()).size() );
-            boolean ifEndOfLine = carriage.getCarriageOfLine() == myLines.get(carriage.getCarriageOfColumn()).size() && (myLines.size()>1);
+            boolean ifEndOfLine = carriage.getCarriageOfLine() == myLines.get(carriage.getCarriageOfColumn()).getChars().size();
             if(ifEndOfText)
                 return;
             else if (ifEndOfLine){
-//                myLines.get(carriage.getCarriageOfColumn()).deleteLine(myLines.get(carriage.getCarriageOfColumn()+ 1));
-//                myLines.remove(carriage.getCarriageOfColumn() + 1);
                 if (myLines.get(carriage.getCarriageOfColumn()+1).size() != 0){
                     for (Char ch: myLines.get(carriage.getCarriageOfColumn()+1).getChars()){
                         myLines.get(carriage.getCarriageOfColumn()).getChars().add(ch);
                     }
                 }
+                myLines.remove(carriage.getCarriageOfColumn() + 1);
             }
             else{
                 myLines.get(carriage.getCarriageOfColumn()).getChars().remove(carriage.getCarriageOfLine());
@@ -438,7 +745,7 @@ public class Main extends Application {
                         myLines.get(carriage.getCarriageOfColumn()-1).getChars().add(ch);
                     }
                 }
-                myLines.remove(carriage.getCarriageOfColumn() + 1);
+                myLines.remove(carriage.getCarriageOfColumn());
                 carriageToUp();
             }
             else if(carriage.getCarriageOfLine() != 0){
@@ -494,7 +801,7 @@ public class Main extends Application {
            for(Line line:myLines){
                checkEndLine(click,line);
                for (Char ch:line.getChars()){
-                   if(contains(click,ch)){
+                   if(findChar(click,ch)){
                        carriage.setCarriageOfColumn(myLines.indexOf(line));
                        carriage.setCarriageOfLine(line.indexOf(ch) + 1);
                    }
@@ -505,8 +812,8 @@ public class Main extends Application {
              for(Line line:myLines){
                  checkEndLine(end,line);
                  for (Char ch:line.getChars()){
-                     ch.setSelect(contains(start,end,ch));
-                     if(contains(end,ch)){
+                     ch.setSelect(findChar(start,end,ch));
+                     if(findChar(end,ch)){
                          carriage.setCarriageOfColumn(myLines.indexOf(line));
                          carriage.setCarriageOfLine(line.indexOf(ch) + 1);
                      }
@@ -523,12 +830,12 @@ public class Main extends Application {
         }
         }
         }
-        public boolean contains(Point2D point2D,Char ch){
+        public boolean findChar(Point2D point2D,Char ch){
             int y = ch.getCoordinateY();
             int x = ch.getCoordinateX();
             return (x<=point2D.getX() && x+ch.getWeight()>=point2D.getX()&& y-ch.getHeight()<=point2D.getY());
         }
-        public boolean contains(Point2D one,Point2D two,Char ch){
+        public boolean findChar(Point2D one,Point2D two,Char ch){
             int y = ch.getCoordinateY();
             int x = ch.getCoordinateX();
             float height = myLines.get(ch.getNumberLine()).getMaxHeightOfLine();
@@ -555,16 +862,22 @@ public class Main extends Application {
         myScene = new Scene(rootNode,500,500);
         primaryStage.setScene(myScene);
 
-
         canvas = new Canvas();
         graphicsContext = canvas.getGraphicsContext2D();
         ScrollPane myPane = new ScrollPane();
+        myPane.setFitToWidth(true);
         rootNode.setCenter(myPane);
         myPane.setContent(canvas);
         canvas.widthProperty().bind(myPane.widthProperty());
         canvas.heightProperty().bind(myPane.heightProperty());
 
-        font = new Font("Arial",10);
+        font = Font.font("Arial",FontWeight.NORMAL,FontPosture.REGULAR,10);
+        fontWeight = FontWeight.NORMAL;
+        fontPosture = FontPosture.REGULAR;
+        System.out.println(font.getFamily());
+        System.out.println(font.getSize());
+        System.out.println(font.getName());
+        System.out.println(font.toString());
         graphicsContext.setFont(font);
        canvas.setOnMouseDragged(mouseListener);
        canvas.setOnMouseClicked(mouseListener);
@@ -572,14 +885,16 @@ public class Main extends Application {
        canvas.setOnMouseReleased(mouseListener);
 
         myPane.setOnKeyPressed(new TextListener(this));
-       myPane.setOnKeyTyped(new TextListener(this));
+        myPane.setOnKeyTyped(new TextListener(this));
 
 
         toolBar = createToolBar();
         menuBar = createMenuBar();
+        editMenu = createContextMenu();
 
         rootNode.setBottom(toolBar);
         rootNode.setTop(menuBar);
+       myPane.setContextMenu(editMenu);
 
         primaryStage.show();
 

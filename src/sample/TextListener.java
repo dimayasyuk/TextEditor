@@ -23,6 +23,8 @@ public class TextListener implements EventHandler<KeyEvent> {
         if(event.getEventType() == KeyEvent.KEY_PRESSED) {
             if(event.getCode() == KeyCode.CAPS)
                 return;
+            else if(event.getCode() == KeyCode.CONTROL)
+                return;
             else if(event.isControlDown() && event.getCode() == KeyCode.C){
                 main.copy();
             }
@@ -57,25 +59,13 @@ public class TextListener implements EventHandler<KeyEvent> {
             } else {
                 main.inputText(event.getText().charAt(0));
             }
+            main.paintCanvas();
         }
         if(event.getEventType() == KeyEvent.KEY_TYPED){
             if(event.getCharacter().equals(" ")){
                 main.inputText( ' ');
             }
-        }
-    /*if(event.getEventType() == KeyEvent.KEY_PRESSED){
-        if(event.getCode() == KeyCode.BACK_SPACE) {
-            main.getMyLine().delete();
             main.paintCanvas();
         }
-        else if(event.isShiftDown()){
-            main.getMyLine().add(new Char(event.getText().toUpperCase().charAt(0)));
-        main.paintCanvas();
-        }
-        else {
-            main.getMyLine().add(new Char(event.getText().charAt(0)));
-        main.paintCanvas();
-        }
-    }*/
        }
     }
