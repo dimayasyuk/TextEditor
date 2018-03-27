@@ -50,6 +50,10 @@ public class Line {
     public void add(char key,Font font,Main main){
         chars.add(new Char(key,font,main));
     }
+
+    public void add(String key,String font,String size,String fontPosture,String fontWeight){
+        chars.add(new Char(key,font,size,fontPosture,fontWeight));
+    }
     public Line copyOfSubLine(int oneIndex,int twoIndex){
       Line line = new Line();
       for(int i = oneIndex;i<twoIndex;i++){

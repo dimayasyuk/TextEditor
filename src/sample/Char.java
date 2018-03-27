@@ -36,13 +36,27 @@ public class Char {
         fontPosture = ch.getFontPosture();
         fontWeight = ch.getFontWeight();
     }
-
+    Char(String key, String font ,String size,String fontsPosture,String fontsWeight){
+        this.symbol = key.charAt(0);
+        System.out.println(FontWeight.valueOf(fontsWeight));
+        System.out.println(FontPosture.valueOf(fontsPosture));
+        this.font = Font.font(font,FontWeight.valueOf(fontsWeight),FontPosture.valueOf(fontsPosture),Integer.parseInt(size));
+        this.fontPosture = FontPosture.valueOf(fontsPosture);
+        this.fontWeight = FontWeight.valueOf(fontsWeight);
+    }
     public FontPosture getFontPosture() {
         return fontPosture;
     }
 
     public FontWeight getFontWeight() {
         return fontWeight;
+    }
+
+    public String getFontName(){
+        return font.getFamily();
+    }
+    public int getFontSize(){
+        return (int)font.getSize();
     }
 
     public void setFontPosture(FontPosture fontPosture) {

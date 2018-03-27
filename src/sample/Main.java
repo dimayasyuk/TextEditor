@@ -4,12 +4,15 @@ import com.sun.javafx.tk.FontMetrics;
 import com.sun.javafx.tk.Toolkit;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
+import javafx.geometry.Dimension2D;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
@@ -31,9 +34,11 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.scene.text.Font;
 
+import javax.xml.stream.*;
 import java.io.*;
 import java.util.*;
 
@@ -67,25 +72,22 @@ public class Main extends Application {
            }
        };
 
-    public void setLines(ArrayList<Line> lines){
-        myLines = lines;
-    }
 
     public FontPosture getFontPosture() {
         return fontPosture;
     }
 
-    public void setFontPosture(FontPosture fontPosture) {
-        this.fontPosture = fontPosture;
-    }
+//    public void setFontPosture(FontPosture fontPosture) {
+//        this.fontPosture = fontPosture;
+//    }
 
     public FontWeight getFontWeight() {
         return fontWeight;
     }
 
-    public void setFontWeight(FontWeight fontWeight) {
-        this.fontWeight = fontWeight;
-    }
+//    public void setFontWeight(FontWeight fontWeight) {
+//        this.fontWeight = fontWeight;
+//    }
 
     public int getFontSize(){
         return (int)font.getSize();
@@ -94,21 +96,21 @@ public class Main extends Application {
         return graphicsContext;
     }
 
-    public Canvas getCanvas() {
-        return canvas;
-    }
+//    public Canvas getCanvas() {
+//        return canvas;
+//    }
 
     public Carriage getCarriage() {
         return carriage;
     }
 
-    public ToggleButton getBoldFont(){
-        return BoldFont;
-    }
-
-    public ToggleButton getItalicFont() {
-        return ItalicFont;
-    }
+//    public ToggleButton getBoldFont(){
+//        return BoldFont;
+//    }
+//
+//    public ToggleButton getItalicFont() {
+//        return ItalicFont;
+//    }
 
     private ContextMenu createContextMenu(){
 
@@ -141,7 +143,58 @@ public class Main extends Application {
         return contextMenu;
     }
 
-    private MenuBar createMenuBar(){
+    public void openTxtFile(){
+                        myLines = new ArrayList<Line>();
+                        try {
+                            BufferedReader reader = new BufferedReader(new FileReader(file));
+                            String line;
+                            while ((line = reader.readLine()) != null) {
+                                Line newLine = new Line();
+                                char[] charLine = line.toCharArray();
+                                for (char ch : charLine) {
+                                    newLine.add(ch, graphicsContext.getFont(),Main.this);
+                                }
+                                myLines.add(newLine);
+                            }
+                            reader.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+    }
+    public void openXmlFile(){
+        try {
+            Line line = new Line();
+            myLines = new ArrayList<Line>();
+                XMLStreamReader xmlr = XMLInputFactory.newInstance().createXMLStreamReader(file.getName(), new FileInputStream(file));
+                while (xmlr.hasNext()){
+                    xmlr.next();
+                    if(xmlr.isStartElement()){
+                        if(xmlr.getLocalName().equals("Line")){
+                            line = new Line();
+                        }
+                        else if(xmlr.getLocalName().equals("Char")){
+                            String font = xmlr.getAttributeValue(null,"Font");
+                            String fontWeight = xmlr.getAttributeValue(null,"FontWeight");
+                            String fontPosture  = xmlr.getAttributeValue(null,"FontPosture");
+                            String size = xmlr.getAttributeValue(null,"Size");
+                            xmlr.next();
+                            line.add(xmlr.getText(),font,size,fontPosture,fontWeight);
+                        }
+                    }else  if(xmlr.isEndElement()){
+                        if(xmlr.getLocalName().equals("Line")){
+                            myLines.add(line);
+                        }
+                    }
+                }
+            }
+        catch (XMLStreamException e) {
+            e.printStackTrace();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public MenuBar createMenuBar(){
             MenuBar menuBar = new MenuBar();
             Menu fileMenu = new Menu("_Файл");
 
@@ -171,25 +224,13 @@ public class Main extends Application {
                     FileChooser fileChooser = new FileChooser();
                     fileChooser.setTitle("Open Resource File");
                     fileChooser.getExtensionFilters().addAll(
-                            new FileChooser.ExtensionFilter("Text Files", "*.txt"));
+                            new FileChooser.ExtensionFilter("Text Files", "*.txt","*.xml"));
                     file = fileChooser.showOpenDialog(myStage);
-                    if(file != null) {
-                        setLines(new ArrayList<Line>());
-                        try {
-                            BufferedReader reader = new BufferedReader(new FileReader(file));
-                            String line;
-                            while ((line = reader.readLine()) != null) {
-                                Line newLine = new Line();
-                                char[] charLine = line.toCharArray();
-                                for (char ch : charLine) {
-                                    newLine.add(ch, graphicsContext.getFont(),Main.this);
-                                }
-                                myLines.add(newLine);
-                            }
-                            reader.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
+                    if(file!=null) {
+                        if (file.getName().endsWith(".txt"))
+                            openTxtFile();
+                        else
+                            openXmlFile();
                     }
                 }
             });
@@ -199,51 +240,97 @@ public class Main extends Application {
         saveHow.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                    FileChooser fileChooser = new FileChooser();
-                    fileChooser.setTitle("Open Resource File");
-                    file = fileChooser.showSaveDialog(myStage);
-                    if(file!=null) {
-                    try (FileWriter writer = new FileWriter(file)) {
-                        for (Line line : myLines) {
-                            String string = "";
-                            for (Char ch : line.getChars()) {
-                                string += ch.getCharToString();
+                FileChooser fileChooser = new FileChooser();
+                fileChooser.setTitle("Open Resource File");
+                file = fileChooser.showSaveDialog(myStage);
+                if(file != null) {
+                                    try {
+                                        XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
+                                        XMLStreamWriter writer = outputFactory.createXMLStreamWriter(new FileWriter(file + ".xml"));
+                                        writer.writeStartDocument("UTF-8", "1.0");
+                                        writer.writeStartElement("Text");
+                                        for(Line line:myLines){
+                                            writer.writeStartElement("Line");
+                                            for(Char ch:line.getChars()){
+                                                writer.writeStartElement("Char");
+                                                writer.writeAttribute("Font",ch.getFontName());
+                                                writer.writeAttribute("FontWeight",ch.getFontWeight().toString());
+                                                writer.writeAttribute("FontPosture",ch.getFontPosture().toString());
+                                                writer.writeAttribute("Size",Integer.toString(ch.getFontSize()));
+                                                writer.writeCharacters(ch.getCharToString());
+                                                writer.writeEndElement();
+                                            }
+                                            writer.writeEndElement();
+                                        }
+                                        writer.writeEndElement();
+                                        writer.writeEndDocument();
+                                        writer.flush();
+                                    } catch (XMLStreamException e) {
+                                        e.printStackTrace();
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
                             }
-                            writer.write(string + '\n');
-                        }
-                        //writer.flush();
-                    } catch (IOException io) {
-                        io.printStackTrace();
-                    }
-                }
-            }
         });
-
             MenuItem save = new MenuItem("Сохранить",new ImageView("save.png"));
             save.setAccelerator(KeyCombination.keyCombination("shortcut+S"));
-        save.setOnAction(new EventHandler<ActionEvent>() {
+            save.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-                if(file == null){
+                if(file==null) {
                     FileChooser fileChooser = new FileChooser();
                     fileChooser.setTitle("Open Resource File");
                     file = fileChooser.showSaveDialog(myStage);
                 }
-                if(file!=null) {
-                    try (FileWriter writer = new FileWriter(file)) {
-                        for (Line line : myLines) {
-                            String string = "";
-                            for (Char ch : line.getChars()) {
-                                string += ch.getCharToString();
+                if(file != null) {
+                    try {
+                        XMLOutputFactory outputFactory = XMLOutputFactory.newInstance();
+                        XMLStreamWriter writer = outputFactory.createXMLStreamWriter(new FileWriter(file + ".xml"));
+                        writer.writeStartDocument("UTF-8", "1.0");
+                        writer.writeStartElement("Text");
+                        for(Line line:myLines){
+                            writer.writeStartElement("Line");
+                            for(Char ch:line.getChars()){
+                                writer.writeStartElement("Char");
+                                writer.writeAttribute("Font",ch.getFontName());
+                                writer.writeAttribute("FontWeight",ch.getFontWeight().toString());
+                                writer.writeAttribute("FontPosture",ch.getFontPosture().toString());
+                                writer.writeAttribute("Size",Integer.toString(ch.getFontSize()));
+                                writer.writeCharacters(ch.getCharToString());
+                                writer.writeEndElement();
                             }
-                            writer.write(string + '\n');
+                            writer.writeEndElement();
                         }
-                        //writer.flush();
-                    } catch (IOException io) {
-                        io.printStackTrace();
+                        writer.writeEndElement();
+                        writer.writeEndDocument();
+                        writer.flush();
+                    } catch (XMLStreamException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
             }
+//                    FileChooser fileChooser = new FileChooser();
+//                    fileChooser.setTitle("Open Resource File");
+//                    file = fileChooser.showSaveDialog(myStage);
+//                }
+//                if(file!=null) {
+//                    try (FileWriter writer = new FileWriter(file)) {
+//                        for (Line line : myLines) {
+//                            String string = "";
+//                            for (Char ch : line.getChars()) {
+//                                string += ch.getCharToString();
+//                            }
+//                            writer.write(string + '\n');
+//                        }
+//                        //writer.flush();
+//                    } catch (IOException io) {
+//                        io.printStackTrace();
+//                    }
+//                }
+//            }
         });
 
             MenuItem exit = new MenuItem("Выйти");
@@ -270,7 +357,6 @@ public class Main extends Application {
                 }
             });
             helpMenu.getItems().addAll(help);
-//            menuBar.getMenus().addAll(fileMenu,changeMenu,formatMenu,helpMenu);
 
         menuBar.getMenus().addAll(fileMenu,helpMenu);
             return menuBar;
@@ -345,117 +431,52 @@ public class Main extends Application {
                     changeFontStyle(fontWeight,fontPosture);
                 }
             });
-            /*ToggleButton UnderlineFont = new ToggleButton("Подчеркнутый",new ImageView("line.gif"));
-            UnderlineFont.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
-            UnderlineFont.setTooltip(new Tooltip("Подчеркнутый"));
-            UnderlineFont.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent event) {
-
-                }
-            });
-            */
             ObservableList<String> Size = FXCollections.observableArrayList("10","15","20");
             fontesSize = new ComboBox<>(Size);
             fontesSize.setValue("10");
             fontesSize.setOnAction(new EventHandler<ActionEvent>() {
                 @Override
                 public void handle(ActionEvent event) {
-                    String size = fontesSize.getValue();
-                    if(size.equals("10")) {
                         if(BoldFont.isSelected()){
                             if(ItalicFont.isSelected()){
-                                font = Font.font(font.getName(),FontWeight.BOLD,FontPosture.ITALIC,10);
+                                font = Font.font(font.getName(),FontWeight.BOLD,FontPosture.ITALIC,Integer.parseInt(fontesSize.getValue()));
                             }
                             else{
-                                font = Font.font(font.getName(),FontWeight.BOLD,FontPosture.REGULAR,10);
+                                font = Font.font(font.getName(),FontWeight.BOLD,FontPosture.REGULAR,Integer.parseInt(fontesSize.getValue()));
                             }
                         }else{
                             if(ItalicFont.isSelected()){
-                                font = Font.font(font.getName(),FontWeight.NORMAL,FontPosture.ITALIC,10);
+                                font = Font.font(font.getName(),FontWeight.NORMAL,FontPosture.ITALIC,Integer.parseInt(fontesSize.getValue()));
                             }
                             else{
-                                font = Font.font(font.getName(),FontWeight.NORMAL,FontPosture.REGULAR,10);
-                            }
-                        }
-                        changeFontSize(10);
+                                font = Font.font(font.getName(),FontWeight.NORMAL,FontPosture.REGULAR,Integer.parseInt(fontesSize.getValue()));
                     }
-                    else if(size.equals("15")) {
-                        if(BoldFont.isSelected()){
-                            if(ItalicFont.isSelected()){
-                                font = Font.font(font.getName(),FontWeight.BOLD,FontPosture.ITALIC,15);
-                            }
-                            else{
-                                font = Font.font(font.getName(),FontWeight.BOLD,FontPosture.REGULAR,15);
-                            }
-                        }else{
-                            if(ItalicFont.isSelected()){
-                                font = Font.font(font.getName(),FontWeight.NORMAL,FontPosture.ITALIC,15);
-                            }
-                            else{
-                                font = Font.font(font.getName(),FontWeight.NORMAL,FontPosture.REGULAR,15);
-                            }
-                        }
-                        changeFontSize(15);
-                    }
-                    else{
-                        if(BoldFont.isSelected()){
-                            if(ItalicFont.isSelected()){
-                                font = Font.font(font.getName(),FontWeight.BOLD,FontPosture.ITALIC,20);
-                            }
-                            else{
-                                font = Font.font(font.getName(),FontWeight.BOLD,FontPosture.REGULAR,20);
-                            }
-                        }else{
-                            if(ItalicFont.isSelected()){
-                                font = Font.font(font.getName(),FontWeight.NORMAL,FontPosture.ITALIC,20);
-                            }
-                            else{
-                                font = Font.font(font.getName(),FontWeight.NORMAL,FontPosture.REGULAR,20);
-                            }
-                        }
-                        changeFontSize(20);
+                        changeFontSize(Integer.parseInt(fontesSize.getValue()));
                     }
                 }
             });
 
-            ObservableList<String> fontesList = FXCollections.observableArrayList("Arial","Times New Roman");
+            List<String> fonts = Font.getFamilies();
+            ObservableList<String> fontesList = FXCollections.observableArrayList(fonts);
             fontes = new ComboBox<>(fontesList);
             fontes.setValue("Arial");
             fontes.setOnAction(new EventHandler<ActionEvent>() {
                 @Override
                 public void handle(ActionEvent event) {
-                    String myFont = fontes.getValue();
-                    if(myFont.equals("Arial")){
                         if(BoldFont.isSelected()){
                             if(ItalicFont.isSelected()){
-                                font = Font.font("Arial",FontWeight.BOLD,FontPosture.ITALIC,font.getSize());
+                                font = Font.font(fontes.getValue(),FontWeight.BOLD,FontPosture.ITALIC,font.getSize());
                             }
                             else{
-                                font = Font.font("Arial",FontWeight.BOLD,FontPosture.REGULAR,font.getSize());
+                                font = Font.font(fontes.getValue(),FontWeight.BOLD,FontPosture.REGULAR,font.getSize());
                             }
                         }else{
                             if(ItalicFont.isSelected()){
-                                font = Font.font("Arial",FontWeight.NORMAL,FontPosture.ITALIC,font.getSize());
+                                font = Font.font(fontes.getValue(),FontWeight.NORMAL,FontPosture.ITALIC,font.getSize());
                             }
                             else{
-                                font = Font.font("Arial",FontWeight.NORMAL,FontPosture.REGULAR,font.getSize());
+                                font = Font.font(fontes.getValue(),FontWeight.NORMAL,FontPosture.REGULAR,font.getSize());
                             }
-                        }
-                    } else if(myFont.equals("Times New Roman")){
-                        if(ItalicFont.isSelected()){
-                            font = Font.font("Times New Roman",FontWeight.BOLD,FontPosture.ITALIC,font.getSize());
-                        }
-                        else{
-                            font = Font.font("Times New Roman",FontWeight.BOLD,FontPosture.REGULAR,font.getSize());
-                        }
-                    }else{
-                        if(ItalicFont.isSelected()){
-                            font = Font.font("Times New Roman",FontWeight.NORMAL,FontPosture.ITALIC,font.getSize());
-                        }
-                        else{
-                            font = Font.font("Times New Roman",FontWeight.NORMAL,FontPosture.REGULAR,font.getSize());
-                        }
                     }
                     changeFontFamily(font);
                 }
@@ -532,7 +553,7 @@ public class Main extends Application {
 
         public void paintCarriage(){
             FontMetrics fontMetrics = Toolkit.getToolkit().getFontLoader().getFontMetrics(font);
-            int y2 = carriage.getCoordinateY() - (int)(0.8*fontMetrics.getLineHeight());
+            int y2 = carriage.getCoordinateY() - (int)(0.8 * fontMetrics.getLineHeight());
             graphicsContext.strokeLine(carriage.getCoordinateX(),carriage.getCoordinateY(),carriage.getCoordinateX(),y2) ;
             try{
                 Thread.sleep(500);
@@ -651,9 +672,11 @@ public class Main extends Application {
             for(Line line: myLines){
                  line.setMaxHeightOfLine(0);
                  for (Char ch:line.getChars()){
-                     Font font = ch.getFont();
-                     FontMetrics fontMetrics = Toolkit.getToolkit().getFontLoader().getFontMetrics(font);
-                     line.setMaxHeightOfLine(fontMetrics.getLineHeight());
+                     Font currFont = Font.font(ch.getFontName(),ch.getFontWeight(),ch.getFontPosture(),ch.getFontSize());
+                     FontMetrics fontMetrics = Toolkit.getToolkit().getFontLoader().getFontMetrics(currFont);
+                     int ascent = (int)(fontMetrics.getAscent() + fontMetrics.getLeading() + 3);
+                     int descent = (int)(fontMetrics.getDescent() + 3);
+                     line.setMaxHeightOfLine(ascent + descent);
                  }
                  if (line.getMaxHeightOfLine() == 0) line.setMaxHeightOfLine(15);
             }
@@ -666,9 +689,9 @@ public class Main extends Application {
                 int letterX = 0;
                 for (Char ch : line.getChars()) {
                     letterX++;
-                    Font font = ch.getFont();
-                    graphicsContext.setFont(font);
-                    FontMetrics fontMetrics = Toolkit.getToolkit().getFontLoader().getFontMetrics(font);
+                    Font currFont = Font.font(ch.getFontName(),ch.getFontWeight(),ch.getFontPosture(),ch.getFontSize());
+                    FontMetrics fontMetrics = Toolkit.getToolkit().getFontLoader().getFontMetrics(currFont);
+                    graphicsContext.setFont(currFont);
                     if(ch.isSelect()){
                         graphicsContext.setFill(Color.AQUA);
                         graphicsContext.fillRect(x-1,y-0.8*line.getMaxHeightOfLine(),
@@ -861,28 +884,32 @@ public class Main extends Application {
         BorderPane rootNode = new BorderPane();
         myScene = new Scene(rootNode,500,500);
         primaryStage.setScene(myScene);
+        Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
+        myStage.setX(primaryScreenBounds.getMinX());
+        myStage.setY(primaryScreenBounds.getMinY());
+        myStage.setWidth(primaryScreenBounds.getWidth());
+        myStage.setHeight(primaryScreenBounds.getHeight());
 
         canvas = new Canvas();
         graphicsContext = canvas.getGraphicsContext2D();
         ScrollPane myPane = new ScrollPane();
-        myPane.setFitToWidth(true);
-        rootNode.setCenter(myPane);
+        myPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        myPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         myPane.setContent(canvas);
+        rootNode.setCenter(myPane);
         canvas.widthProperty().bind(myPane.widthProperty());
         canvas.heightProperty().bind(myPane.heightProperty());
+        //myPane.setHmax(4);
 
         font = Font.font("Arial",FontWeight.NORMAL,FontPosture.REGULAR,10);
         fontWeight = FontWeight.NORMAL;
         fontPosture = FontPosture.REGULAR;
-        System.out.println(font.getFamily());
-        System.out.println(font.getSize());
-        System.out.println(font.getName());
-        System.out.println(font.toString());
         graphicsContext.setFont(font);
-       canvas.setOnMouseDragged(mouseListener);
-       canvas.setOnMouseClicked(mouseListener);
-       canvas.setOnMousePressed(mouseListener);
-       canvas.setOnMouseReleased(mouseListener);
+
+        canvas.setOnMouseDragged(mouseListener);
+        canvas.setOnMouseClicked(mouseListener);
+        canvas.setOnMousePressed(mouseListener);
+        canvas.setOnMouseReleased(mouseListener);
 
         myPane.setOnKeyPressed(new TextListener(this));
         myPane.setOnKeyTyped(new TextListener(this));
@@ -894,7 +921,7 @@ public class Main extends Application {
 
         rootNode.setBottom(toolBar);
         rootNode.setTop(menuBar);
-       myPane.setContextMenu(editMenu);
+        myPane.setContextMenu(editMenu);
 
         primaryStage.show();
 
