@@ -59,13 +59,13 @@ public class TextListener implements EventHandler<KeyEvent> {
             } else {
                 main.inputText(event.getText().charAt(0));
             }
-            main.paintCanvas();
+            //main.paintCanvas();
         }
         if(event.getEventType() == KeyEvent.KEY_TYPED){
             if(event.getCharacter().equals(" ")){
                 main.inputText( ' ');
             }
-            main.paintCanvas();
+           // main.paintCanvas();
         }
        }
     }

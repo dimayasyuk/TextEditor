@@ -10,19 +10,16 @@ import javafx.scene.text.FontWeight;
 public class Char {
     private int numberLine;
     private char symbol;
-    private int coordinateX;
+    private int coordinateX; //
     private int coordinateY;
     private float height;
     private float weight;
     private Font font;
     private FontWeight fontWeight;
     private FontPosture fontPosture;
-    private boolean isSelect;
-    private Main main;
-
+    private boolean isSelect; //TODO Remove this field
 
     Char(char symbol,Font font,Main main){
-        this.main = main;
         this.symbol = symbol;
         this.font = font;
         isSelect = false;
@@ -57,14 +54,6 @@ public class Char {
     }
     public int getFontSize(){
         return (int)font.getSize();
-    }
-
-    public void setFontPosture(FontPosture fontPosture) {
-        this.fontPosture = fontPosture;
-    }
-
-    public void setFontWeight(FontWeight fontWeight) {
-        this.fontWeight = fontWeight;
     }
 
     public int getCoordinateX() {

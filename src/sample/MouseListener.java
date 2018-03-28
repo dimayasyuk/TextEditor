@@ -32,6 +32,6 @@ public class MouseListener implements EventHandler<MouseEvent> {
             Point2D point2D = new Point2D(event.getX(),event.getY());
             main.clickedMouse(clickOnMouse,point2D);
         }
-        main.paintCanvas();
+        //main.paintCanvas();
     }
 }
