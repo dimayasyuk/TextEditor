@@ -14,10 +14,8 @@ public class Line {
     private float maxHeightOfLine;
     private int maxLength;
     private int numberOfLine;
-   // private  Main main;
 
     public Line(){
-        //this.main = main;
         chars = new ArrayList<>();
         maxHeightOfLine = 15;
         maxLength = 0;
@@ -61,13 +59,6 @@ public class Line {
       }
       return line;
     }
-
-
-//    public void deleteLine(Line line){
-//        for(int i = 0;i < line.size();i++){
-//            this.add(line.chars.get(i));
-//        }
-//    }
 
     public int indexOf(Char ch){
         return  chars.indexOf(ch);

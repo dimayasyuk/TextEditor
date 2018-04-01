@@ -12,60 +12,73 @@ import javafx.scene.input.KeyEvent;
 public class TextListener implements EventHandler<KeyEvent> {
 
     private Main main;
-    Carriage carriage;
+    private Panel panel;
     public TextListener(Main main){
         this.main = main;
-        carriage = main.getCarriage();
+        panel = main.getMyPanel();
     }
 
     @Override
     public void handle(KeyEvent event) {
         if(event.getEventType() == KeyEvent.KEY_PRESSED) {
-            if(event.getCode() == KeyCode.CAPS)
+            if(event.getCode() == KeyCode.CAPS) {
                 return;
-            else if(event.getCode() == KeyCode.CONTROL)
+            }
+            else if(event.getCode() == KeyCode.CONTROL) {
                 return;
+            }
             else if(event.isControlDown() && event.getCode() == KeyCode.C){
-                main.copy();
+                panel.copy();
+                panel.paintCanvas();
             }
             else if(event.isControlDown() && event.getCode() == KeyCode.X){
-                main.cut();
+                panel.cut();
+                panel.paintCanvas();
             }
             else if(event.isControlDown() && event.getCode() == KeyCode.V){
-                main.paste();
+                panel.paste();
+                panel.paintCanvas();
             }
-            else if(event.getCode() == KeyCode.DELETE)
-                main.delete();
-            else if(event.getCode() == KeyCode.BACK_SPACE)
-                main.backSpace();
+            else if(event.getCode() == KeyCode.DELETE) {
+                panel.delete();
+                panel.paintCanvas();
+            }
+            else if(event.getCode() == KeyCode.BACK_SPACE) {
+                panel.backSpace();
+                panel.paintCanvas();
+            }
             else if (event.getCode() == KeyCode.LEFT) {
-                main.carriageToLeft();
-                main.falseAllSelection();
+                panel.carriageToLeft();
+                panel.falseAllSelection();
+                panel.paintCanvas();
             }
             else if(event.getCode() == KeyCode.RIGHT) {
-                main.carriageToRight();
-                main.falseAllSelection();
+                panel.carriageToRight();
+                panel.falseAllSelection();
+                panel.paintCanvas();
             }
             else if(event.getCode() == KeyCode.UP){
-                main.carriageToUp();
-                main.falseAllSelection();
+                panel.carriageToUp();
+                panel.falseAllSelection();
+                panel.paintCanvas();
             }
             else if(event.getCode() == KeyCode.DOWN){
-                main.carriageToDown();
-                main.falseAllSelection();
+                panel.carriageToDown();
+                panel.falseAllSelection();
+                panel.paintCanvas();
             }
             else if (event.getCode() == KeyCode.ENTER) {
-              main.newLine();
+                panel.newLine();
+                panel.paintCanvas();
             } else {
-                main.inputText(event.getText().charAt(0));
+                panel.inputText(event.getText().charAt(0));
+                panel.paintCanvas();
             }
-            //main.paintCanvas();
         }
         if(event.getEventType() == KeyEvent.KEY_TYPED){
             if(event.getCharacter().equals(" ")){
-                main.inputText( ' ');
+                panel.inputText( ' ');
             }
-           // main.paintCanvas();
         }
        }
     }

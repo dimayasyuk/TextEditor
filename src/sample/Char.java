@@ -23,8 +23,8 @@ public class Char {
         this.symbol = symbol;
         this.font = font;
         isSelect = false;
-        this.fontWeight = main.getFontWeight();
-        this.fontPosture = main.getFontPosture();
+        this.fontWeight = main.getMyPanel().getFontWeight();
+        this.fontPosture = main.getMyPanel().getFontPosture();
     }
     Char(Char ch){
         symbol = ch.getSymbol();
