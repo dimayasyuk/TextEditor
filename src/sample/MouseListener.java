@@ -9,7 +9,6 @@ import javafx.scene.input.MouseEvent;
  * Created by Lenovo on 05.03.2018.
  */
 public class MouseListener implements EventHandler<MouseEvent> {
-    //private Main main;
     private  Panel panel;
     private Point2D clickOnMouse;
     public MouseListener(Panel panel){
@@ -25,6 +24,7 @@ public class MouseListener implements EventHandler<MouseEvent> {
         }
         if (event.getEventType() == MouseEvent.MOUSE_PRESSED){
             clickOnMouse = new Point2D(event.getX(),event.getY());
+            panel.paintCanvas();
         }
         if(event.getEventType() == MouseEvent.MOUSE_CLICKED){
           Point2D point2D = new Point2D(event.getX(),event.getY());

@@ -9,6 +9,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
@@ -37,8 +38,7 @@ public class Panel {
 
     public Panel(Main main) {
         this.main = main;
-        Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
-        canvas = new Canvas(primaryScreenBounds.getWidth(), primaryScreenBounds.getHeight());
+        canvas = new Canvas(1580,750);
         graphicsContext = canvas.getGraphicsContext2D();
         createInput();
         mouseListener = new MouseListener(this);
@@ -46,6 +46,14 @@ public class Panel {
         canvas.setOnMouseClicked(mouseListener);
         canvas.setOnMousePressed(mouseListener);
         canvas.setOnMouseReleased(mouseListener);
+    }
+
+    public Font getFont(){
+        return font;
+    }
+
+    public Carriage getCarriage() {
+        return carriage;
     }
 
     public Canvas getCanvas() {
@@ -176,6 +184,15 @@ public class Panel {
             e.printStackTrace();
         }
         graphicsContext.strokeLine(carriage.getCoordinateX(), carriage.getCoordinateY(), carriage.getCoordinateX(), y2);
+    }
+
+    public Point2D checkCarriage(){
+        int x = 0;
+        if(carriage.getCoordinateX() > main.getMyStage().getWidth()){
+            x = carriage.getCoordinateX();
+        }
+        int y = carriage.getCoordinateY() - main.getTextDocument().getLines().get(carriage.getCarriageOfColumn()).getMaxLength();
+        return new Point2D(x,y);
     }
 
     public void createInput() {
@@ -463,6 +480,7 @@ public class Panel {
     }
 
     public void clickedMouse(Point2D start, Point2D end) {
+        falseAllSelection();
         for (Line line : main.getTextDocument().getLines()) {
             checkEndLine(end, line);
             for (Char ch : line.getChars()) {

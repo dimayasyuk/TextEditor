@@ -1,20 +1,26 @@
 package sample;
 
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Bounds;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.text.Font;
-import javafx.scene.text.FontPosture;
-import javafx.scene.text.FontWeight;
+import javafx.stage.Modality;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 
@@ -31,12 +37,23 @@ public class Main extends Application {
     private Scene myScene;
     private TextDocument textDocument;
     private Stage myStage;
+    private ScrollPane myPane;
     private ToggleButton BoldFont;
     private ToggleButton ItalicFont;
+    private RadioMenuItem font10;
+    private RadioMenuItem font15;
+    private RadioMenuItem font20;
+    private CheckMenuItem bold;
+    private CheckMenuItem italic;
     private boolean italicSelected = false;
     private boolean boldSelected = false;
     private FileListener fileListener = new FileListener(this);
 
+
+
+    public ScrollPane getMyPane(){
+        return myPane;
+    }
 
     public TextDocument getTextDocument() {
         return textDocument;
@@ -59,13 +76,6 @@ public class Main extends Application {
 
     public boolean isItalicSelected() {
         return italicSelected;
-    }
-
-    public void setBoldSelected(boolean boldSelected) {
-        this.boldSelected = boldSelected;
-    }
-    public void setItalicSelected(boolean italicSelected){
-        this.italicSelected = italicSelected;
     }
 
     private ContextMenu createContextMenu() {
@@ -143,20 +153,90 @@ public class Main extends Application {
                 myPanel.paintCanvas();
             }
         });
+
         correctMenu.getItems().addAll(cut,copy,paste);
 
         Menu formatMenu = new Menu("Формат");
-        Menu fontsSize  = new Menu("Размер шрифта");
-        RadioMenuItem smallSize = new RadioMenuItem("10");
-        RadioMenuItem mediumSize = new RadioMenuItem("15");
-        RadioMenuItem bigSize = new RadioMenuItem("20");
+        Menu fontStyle = new Menu("Стиль");
+        bold = new CheckMenuItem("Жирный");
+        bold.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+               BoldFont.fire();
+            }
+        });
+        italic = new CheckMenuItem("Курсив");
+        italic.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                ItalicFont.fire();
+            }
+        });
+        fontStyle.getItems().addAll(bold,italic);
+
+        Menu sizeStyle = new Menu("Размер");
+        font10 = new RadioMenuItem("10");
+        font15 = new RadioMenuItem("15");
+        font20 = new RadioMenuItem("20");
         ToggleGroup sizeGroup = new ToggleGroup();
-        smallSize.setToggleGroup(sizeGroup);
-        mediumSize.setToggleGroup(sizeGroup);
-        bigSize.setToggleGroup(sizeGroup);
-        smallSize.setSelected(true);
-        fontsSize.getItems().addAll(smallSize,mediumSize,bigSize);
-        formatMenu.getItems().addAll(fontsSize);
+        font10.setToggleGroup(sizeGroup);
+        font10.setSelected(true);
+        font10.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                fontesSize.setValue(font10.getText());
+            }
+        });
+        font15.setToggleGroup(sizeGroup);
+        font15.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                fontesSize.setValue(font15.getText());
+            }
+        });
+        font20.setToggleGroup(sizeGroup);
+        font20.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                fontesSize.setValue(font20.getText());
+            }
+        });
+        sizeStyle.getItems().addAll(font10,font15,font20);
+
+
+        MenuItem font = new MenuItem("Тип");
+       font.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+
+                BorderPane borderPane = new BorderPane();
+
+                List<String> fonts = Font.getFamilies();
+                ObservableList<String> fontesList = FXCollections.observableArrayList(fonts);
+                ListView<String> nameFonts = new ListView<>(fontesList);
+                nameFonts.setPrefSize(220,200);
+                MultipleSelectionModel<String> nameFontsModel = nameFonts.getSelectionModel();
+                nameFontsModel.selectedItemProperty().addListener(new ChangeListener<String>() {
+                    @Override
+                    public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                        fontes.setValue(newValue);
+                    }
+                });
+
+                borderPane.setCenter(nameFonts);
+
+                Scene secondScene = new Scene(borderPane,220,200);
+                Stage newWindow = new Stage();
+                newWindow.setResizable(false);
+                newWindow.setTitle("Шрифт");
+                newWindow.setScene(secondScene);
+                newWindow.initModality(Modality.WINDOW_MODAL);
+                newWindow.initOwner(myStage);
+                newWindow.show();
+            }
+        });
+
+        formatMenu.getItems().addAll(fontStyle,sizeStyle,font);
 
         Menu helpMenu = new Menu("Помощь");
         MenuItem help = new MenuItem("О программе", new ImageView("info.png"));
@@ -176,7 +256,8 @@ public class Main extends Application {
         return menuBar;
     }
 
-    private ToolBar createToolBar() {
+
+    public ToolBar createToolBar() {
         ToolBar toolBar = new ToolBar();
 
         BoldFont = new ToggleButton("Полужирный", new ImageView("bold.png"));
@@ -187,8 +268,10 @@ public class Main extends Application {
             public void handle(ActionEvent event) {
                 if (BoldFont.isSelected()) {
                     boldSelected = true;
+                    bold.setSelected(true);
                 } else {
                     boldSelected = false;
+                    bold.setSelected(false);
                 }
                 myPanel.setFontStyle();
             }
@@ -202,8 +285,10 @@ public class Main extends Application {
             public void handle(ActionEvent event) {
                 if (ItalicFont.isSelected()) {
                     italicSelected = true;
+                    italic.setSelected(true);
                 }else{
                     italicSelected = false;
+                    italic.setSelected(false);
                 }
                 myPanel.setFontStyle();
             }
@@ -216,6 +301,19 @@ public class Main extends Application {
             @Override
             public void handle(ActionEvent event) {
                 myPanel.setFontSize(Integer.parseInt(fontesSize.getValue()));
+                if(fontesSize.getValue().equals("10")){
+                    font10.setSelected(true);
+                    font15.setSelected(false);
+                    font20.setSelected(false);
+                }else if(fontesSize.getValue().equals("15")){
+                    font10.setSelected(false);
+                    font15.setSelected(true);
+                    font20.setSelected(false);
+                }else {
+                    font10.setSelected(false);
+                    font15.setSelected(false);
+                    font20.setSelected(true);
+                }
             }
         });
 
@@ -268,19 +366,34 @@ public class Main extends Application {
         primaryStage.setTitle("Текстовый редактор");
         primaryStage.getIcons().add(new Image("Блокнот.jpg"));
         BorderPane rootNode = new BorderPane();
-        myScene = new Scene(rootNode, 500, 500);
-        primaryStage.setScene(myScene);
         Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
+        myScene = new Scene(rootNode, primaryScreenBounds.getWidth(), primaryScreenBounds.getHeight());
+        primaryStage.setScene(myScene);
         myStage.setX(primaryScreenBounds.getMinX());
         myStage.setY(primaryScreenBounds.getMinY());
         myStage.setWidth(primaryScreenBounds.getWidth());
         myStage.setHeight(primaryScreenBounds.getHeight());
-        myPanel = new Panel(this);
 
-        ScrollPane myPane = new ScrollPane(myPanel.getCanvas());
+        myPane = new ScrollPane();
+//        myPane.vvalueProperty().addListener(new ChangeListener<Number>() {
+//            @Override
+//            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+//
+//            }
+//        });
+//        myPane.hvalueProperty().addListener(new ChangeListener<Number>() {
+//            @Override
+//            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+//
+//            }
+//        });
+        rootNode.setCenter(myPane);
+        myPanel = new Panel(this);
+        myPane.setContent(myPanel.getCanvas());
+        myPane.setFitToHeight(true);
+        myPane.setFitToWidth(true);
         myPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         myPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        rootNode.setCenter(myPane);
 
 
         myPane.setOnKeyPressed(new TextListener(this));
@@ -296,7 +409,6 @@ public class Main extends Application {
         myPane.setContextMenu(editMenu);
 
         primaryStage.show();
-
     }
 
     public static void main(String[] args) {

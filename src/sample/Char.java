@@ -17,19 +17,16 @@ public class Char {
     private Font font;
     private FontWeight fontWeight;
     private FontPosture fontPosture;
-    private boolean isSelect; //TODO Remove this field
 
     Char(char symbol,Font font,Main main){
         this.symbol = symbol;
         this.font = font;
-        isSelect = false;
         this.fontWeight = main.getMyPanel().getFontWeight();
         this.fontPosture = main.getMyPanel().getFontPosture();
     }
     Char(Char ch){
         symbol = ch.getSymbol();
         font = ch.getFont();
-        isSelect = ch.isSelect();
         fontPosture = ch.getFontPosture();
         fontWeight = ch.getFontWeight();
     }
@@ -98,14 +95,6 @@ public class Char {
 
     public char getSymbol(){
         return symbol;
-    }
-
-    public boolean isSelect() {
-        return isSelect;
-    }
-
-    public void setSelect(boolean select) {
-        isSelect = select;
     }
 
     public int getNumberLine() {
